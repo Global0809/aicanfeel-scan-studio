@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1416">
+  <meta name="description" content="AICANFEEL Scan Studio. A multiview performer scan and digital-double workstation for music-video production.">
+  <title>AICANFEEL — Scan Studio</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AICANFEEL — Scan Studio">
+  <meta property="og:description" content="A multiview performer study in point-cloud scanning, UV mapping, motion analysis and iridescent shading.">
+  <meta property="og:image" content="./brand/studio-preview.jpg">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1080">
+  <meta property="og:image:alt" content="Scan bands cross a performer's rotating digital double in AICANFEEL Scan Studio, beside three reference cameras and a tracking graph.">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="./brand/icon.svg" type="image/svg+xml">
+  <link rel="preload" as="image" href="./brand/aicanfeel.webp">
+  <link rel="preload" as="image" href="./replay/scan-poster.webp" fetchpriority="high">
+  <script type="module" crossorigin src="./assets/index-ZvxFSYT7.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Bj_Kvmic.css">
+</head>
+<body>
+  <main id="workstation" class="workstation" aria-label="AICANFEEL Scan Studio">
+    <header class="appbar">
+      <div class="brand"><img src="./brand/aicanfeel.webp" alt="AICANFEEL"><span>SCAN STUDIO</span></div>
+      <nav class="main-menu" id="main-menu" aria-label="Application menu"></nav>
+      <nav class="workspaces" id="workspaces" aria-label="Workspaces"></nav>
+      <div class="session-capsule"><button class="session-strip" data-action="play" aria-label="Toggle session playback"><span class="engine-light"></span><span id="live-label">Live</span></button><svg viewBox="0 0 68 18" class="signal-ribbon" aria-hidden="true"><defs><linearGradient id="ribbon-color" x1="0" x2="1" y1="0" y2=".7"><stop stop-color="#62777b"/><stop offset=".27" stop-color="#dceee5"/><stop offset=".43" stop-color="#73838f"/><stop offset=".62" stop-color="#bca9cb"/><stop offset=".76" stop-color="#e7f8ef"/><stop offset="1" stop-color="#607d83"/></linearGradient></defs><path id="ribbon-path" fill="url(#ribbon-color)" d="M0 9 Q24 3 37 10T68 7Q46 17 30 11T0 9Z"/></svg><button class="fullscreen icon-button" data-action="fullscreen" aria-label="Full screen" title="Full screen (F)"></button></div>
+    </header>
+    <div class="workspace-body">
+      <div class="viewing-area">
+        <div class="upper-views">
+          <aside id="ortho-views" class="ortho-views" aria-label="Orthographic capture views"></aside>
+          <section class="perspective surface-panel" aria-label="Main perspective viewport">
+            <div id="view-toolbar" class="pane-toolbar"></div>
+            <div id="stage" class="stage">
+              <div id="world-background" class="world-background"></div>
+              <div id="optical-stage" class="optical-stage">
+                <video id="optical-video" muted loop playsinline disablepictureinpicture preload="auto" poster="./replay/scan-poster.webp" aria-label="Performer capture viewport"></video>
+                <img id="pinned-image" alt="">
+                <canvas id="landmarks" aria-hidden="true"></canvas>
+              </div>
+              <div id="mesh-stage" class="mesh-stage" aria-label="Interactive reconstructed 3D performer"></div>
+              <video id="opening-preview" muted playsinline loop preload="none" disablepictureinpicture aria-hidden="true" hidden></video>
+              <div class="replay-window" id="replay-window"><video class="viewport-replay" id="viewport-replay" muted loop playsinline disablepictureinpicture aria-hidden="true"></video><canvas id="replay-tile" role="img" aria-label="Rendered turntable playback"></canvas></div>
+              <canvas id="phase-wipe" class="phase-wipe" hidden aria-hidden="true"></canvas>
+              <div id="phase-exposure" hidden aria-hidden="true"></div>
+              <div class="viewport-id"><strong id="perspective-title">User Perspective</strong><span id="perspective-object">(1) Scan | Head</span></div>
+              <div id="tool-rail" class="tool-rail" aria-label="Viewport tools"></div>
+              <div id="camera-controls" class="camera-controls"></div>
+              <aside id="viewport-inspector" class="viewport-inspector" aria-label="Viewport sidebar"></aside>
+              <div id="viewport-callout" class="viewport-callout" hidden></div>
+              <div class="scene-caption"><div class="caption-meta"><span class="pass-index" id="pass-index"></span><span class="pass-workspace" id="pass-workspace"></span></div><strong id="pass-name">Optical capture</strong><span class="pass-clock" id="pass-clock" hidden><i></i></span></div>
+            </div>
+          </section>
+        </div>
+        <section class="analysis-band" aria-label="Scan analysis">
+          <div class="plot-panel">
+            <div class="plot-title"><span class="plot-heading" title="Landmark displacement relative to optical-flow predictions, in original capture pixels"><i data-icon="chart-dots-2"></i>Optical Tracking Error</span><span class="plot-detail"><span class="plot-sample"></span><b id="trace-stat">—</b> px</span></div>
+            <div class="plot-body"><canvas id="trace-graph" aria-label="Measured landmark tracking error across the capture sequence"></canvas></div>
+          </div>
+          <div class="plot-panel dist-panel">
+            <div class="plot-title"><button class="plot-heading" data-action="distribution" title="Switch between histogram and point classification"><i data-icon="chart-histogram"></i><span id="distribution-name">Error Distribution</span><i data-icon="chevron-down"></i></button></div>
+            <div class="plot-body"><canvas id="distribution-graph" aria-label="Distribution of scan residuals"></canvas></div>
+          </div>
+        </section>
+      </div>
+      <aside class="properties-column" aria-label="Scene and render properties">
+        <section class="outliner editor" aria-label="Scene collection">
+          <div id="outliner-toolbar" class="pane-toolbar"></div>
+          <div class="tree" id="scene-tree" role="tree" aria-label="Scene objects"></div>
+        </section>
+        <section class="pass-study" aria-label="Current material study">
+          <header><span class="study-label"><i data-icon="focus-2"></i>Pass monitor</span><span id="study-unit">Y / XZ</span></header>
+          <h2 id="study-title">Optical sections</h2>
+          <canvas id="study-canvas" aria-label="Analytical views of the performer and the selected material"></canvas>
+          <div class="study-readout"><span id="study-legend">Axial slice</span><output id="study-value"></output></div>
+        </section>
+        <section class="properties editor" aria-label="Properties editor">
+          <div id="properties-toolbar" class="pane-toolbar"></div>
+          <div class="property-contents"><div id="property-rail" class="property-rail"></div><div id="properties-content" class="properties-content"></div></div>
+        </section>
+      </aside>
+    </div>
+    <section class="sequence-deck" aria-label="Material sequence timeline">
+      <div class="sequence-id"><i data-icon="layers-intersect"></i><span>Pass sequence</span></div>
+      <div class="sequence-bed"><div id="sequence-ruler" aria-hidden="true"></div><div class="sequence-clips" id="sequence-clips" aria-label="Seek to a material pass"></div><i id="sequence-needle" aria-hidden="true"></i></div>
+      <span class="sequence-length"><i data-icon="repeat"></i>38.0 s</span>
+    </section>
+    <footer class="statusbar">
+      <span class="footer-project"><i data-icon="file-3d"></i>Performer_01.acf</span>
+      <span class="status-divider"></span>
+      <div class="transport"><button data-action="restart" title="First frame (Home)" aria-label="First frame"><i data-icon="player-skip-back"></i></button><button data-action="play" title="Pause playback (Space)" aria-label="Pause playback" id="play-button"><i data-icon="player-pause"></i></button><button data-action="next-pass" title="Next scan pass" aria-label="Next scan pass"><i data-icon="player-skip-forward"></i></button></div>
+      <span class="timecode" id="timecode">00:00:00:00</span>
+      <span class="transport-detail" id="play-state">Auto playback</span>
+      <span class="footer-spacer"></span>
+      <span class="readout"><span class="engine-light"></span><span id="pipeline-status">Optical feed</span></span>
+      <span class="status-divider"></span>
+      <span class="output-format">3840 × 2160 <span>/</span> 60 fps</span>
+      <span class="status-divider"></span>
+      <span class="footer-engine">Scan Studio 1.0</span>
+    </footer>
+    <div id="popover" class="popover" role="menu" hidden></div>
+    <div id="dialog-layer" class="dialog-layer" hidden></div>
+  </main>
+  <noscript>AICANFEEL Scan Studio requires JavaScript for playback.</noscript>
+</body>
+</html>

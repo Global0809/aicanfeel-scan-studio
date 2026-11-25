@@ -3,12 +3,18 @@ const video = document.querySelector("video");
 const play = document.querySelector("#play");
 const issue = document.querySelector("#issue");
 const calm = matchMedia("(prefers-reduced-motion: reduce)");
-const requested = new URLSearchParams(location.search).get("quality");
+const options = new URLSearchParams(location.search);
+const requested = options.get("quality");
+const legacy = options.get("reel") === "scan";
+if (legacy) {
+  shell.dataset.reel = "scan";
+  video.poster = "./brand/studio-preview.jpg";
+}
 const width = Math.min(innerWidth, innerHeight * 16 / 9) * (devicePixelRatio || 1);
-const hls = new URL("./replay/session-4k.m3u8", location.href);
-const compactHls = new URL("./replay/call-4k.m3u8", location.href);
-const nativePlaylist = new URL("./replay/presentation-4k.m3u8", location.href);
-const hd = new URL("./replay/session-hd.mp4", location.href);
+const hls = new URL(legacy ? "./replay/session-4k.m3u8" : "./replay/workspace-4k.m3u8", location.href);
+const compactHls = new URL(legacy ? "./replay/call-4k.m3u8" : "./replay/workspace-call-4k.m3u8", location.href);
+const nativePlaylist = new URL(legacy ? "./replay/presentation-4k.m3u8" : "./replay/workspace-adaptive.m3u8", location.href);
+const hd = new URL(legacy ? "./replay/session-hd.mp4" : "./replay/workspace-hd.mp4", location.href);
 const codec = 'video/mp4; codecs="avc1.640034"';
 const connection = navigator.connection;
 const slowLink = connection?.saveData || ["slow-2g", "2g", "3g"].includes(connection?.effectiveType)
@@ -16,6 +22,9 @@ const slowLink = connection?.saveData || ["slow-2g", "2g", "3g"].includes(connec
 let high = requested === "4k" || (requested !== "hd" && width > 2100 && !slowLink);
 let wantsPlayback = !calm.matches;
 let disposeStream = () => {};
+let studioVisible = false;
+const studioLink = document.querySelector("#studio-entry");
+const studioFrame = document.querySelector("#studio-frame");
 
 function update() {
   play.textContent = video.paused ? "Play" : "Pause";
@@ -23,7 +32,7 @@ function update() {
 }
 
 function start() {
-  if (wantsPlayback) video.play().catch(error=>{
+  if (wantsPlayback && !studioVisible) video.play().catch(error=>{
     update();
     if(error.name==="NotAllowedError")shell.classList.add("paused");
   });
@@ -45,7 +54,7 @@ function playbackError() {
   if (high) {
     progressive(video.currentTime);
   } else {
-    issue.textContent = "Playback unavailable. Open the live editor.";
+    issue.textContent = "Playback unavailable. Select Open Studio to continue.";
     issue.hidden = false;
     update();
   }
@@ -232,6 +241,29 @@ function toggle() {
   if (wantsPlayback) start();
   else video.pause();
 }
+function showStudio(visible) {
+  studioVisible = visible;
+  shell.hidden = visible;
+  studioFrame.hidden = !visible;
+  if (visible) {
+    video.pause();
+    if (!studioFrame.hasAttribute("src")) studioFrame.src = studioLink.href;
+    studioFrame.focus();
+  } else {
+    start();
+    studioLink.focus({preventScroll:true});
+  }
+  studioFrame.contentWindow?.postMessage({type:"acf:studio-visibility",visible},location.origin);
+}
+studioLink.addEventListener("click", event => {
+  if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  showStudio(true);
+});
+window.addEventListener("message", event => {
+  if (studioVisible && event.origin === location.origin && event.source === studioFrame.contentWindow &&
+      event.data?.type === "acf:show-presentation") showStudio(false);
+});
 function fullscreen() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
@@ -241,7 +273,7 @@ play.onclick = toggle;
 document.querySelector("#full").onclick = fullscreen;
 video.ondblclick = fullscreen;
 document.addEventListener("keydown", event => {
-  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+  if (studioVisible || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.code === "KeyF") { event.preventDefault(); fullscreen(); }
   if (event.code === "Space" && !event.target.closest("a,button")) { event.preventDefault(); toggle(); }
 });

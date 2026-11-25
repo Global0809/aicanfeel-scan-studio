@@ -39,7 +39,8 @@ let currentClipButtons=new Map();
 const poseControls=new Set(["yaw","tilt","zoom"]);
 
 fillIcons();
-app.style.setProperty("--material-sheet",'url("'+asset("ui/shot-materials.webp")+'")');
+const materialSheet=new URL(asset("ui/shot-materials.webp"),document.baseURI);
+app.style.setProperty("--material-sheet",'url("'+materialSheet.href+'")');
 const viewport=createViewport($("render-host"),$("stage-canvas"),engine=>{
   app.dataset.engine=engine;
   $("engine").textContent=engine==="webgl"?"Live WebGL":"Atlas preview";

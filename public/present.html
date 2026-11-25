@@ -8,8 +8,8 @@
   <meta name="description" content="AICANFEEL Scan Studio's 4K60 performer study, from optical capture and UV calibration to brushed titanium and motion analysis.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="AICANFEEL — Scan Studio Presentation">
-  <meta property="og:description" content="Watch the 38-second performer study in 4K60. Seven material views share one continuously rotating digital double.">
-  <meta property="og:image" content="https://global0809.github.io/aicanfeel-scan-studio/brand/studio-preview.jpg">
+  <meta property="og:description" content="Watch the live workspace in 4K60, then edit the performer, camera and soundtrack in the same tab.">
+  <meta property="og:image" content="https://global0809.github.io/aicanfeel-scan-studio/brand/workspace-preview.jpg">
   <meta property="og:image:width" content="1920">
   <meta property="og:image:height" content="1080">
   <meta property="og:image:alt" content="The AICANFEEL scan workstation showing the performer, calibrated cameras, tracking graphs and pass sequence.">
@@ -18,23 +18,33 @@
   <style>
     *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#050708;color:#dce6e2}
     body{display:grid;place-items:center;font:13px Consolas,monospace}
-    main{position:relative;width:min(100vw,177.77778vh);aspect-ratio:16/9}
+    main{position:relative;width:min(100vw,177.77778dvh);aspect-ratio:16/9;container-type:inline-size}
     video{display:block;width:100%;height:100%;object-fit:contain}
     nav{position:absolute;right:1.5%;bottom:3.5%;display:flex;align-items:center;gap:2px;padding:3px;border:1px solid #647570;border-radius:4px;background:#111a1ef5;box-shadow:0 4px 24px #0307087a;opacity:0;pointer-events:none;transition:opacity .15s}
     main.tools nav,nav:focus-within,main.paused nav{opacity:1;pointer-events:auto}
     a,button{font:inherit;letter-spacing:.035em;text-transform:uppercase;color:inherit;background:transparent;border:0;padding:7px 11px;text-decoration:none;cursor:pointer}
     a:hover,button:hover{color:#c1ffdd}main:not(.tools):not(.paused){cursor:none}
+    [hidden]{display:none!important}
+    .studio-entry{position:absolute;top:1.82%;left:56%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:.58em;z-index:1;padding:.50em .78em;
+      border:1px solid #8ed5bc;border-radius:4px;background:#1a3630f0;color:#e2fff2;box-shadow:0 0 1.5em #08101990;
+      white-space:nowrap;font-size:clamp(7px,1.16cqw,29px);letter-spacing:.05em;text-transform:uppercase}
+    main[data-reel=scan] .studio-entry{top:3.8%;right:1.35%;left:auto;transform:none}
+    .studio-entry::before{content:"";height:.51em;aspect-ratio:1;background:#a8ffe1;border-radius:50%;box-shadow:0 0 .8em #93ebc9}
+    .studio-entry:hover,.studio-entry:focus-visible{background:#23473d;color:#effff9}
+    .studio-frame{width:100%;height:100dvh;border:0;display:block;background:#080b10}
     #issue{position:absolute;bottom:12%;right:2%;padding:8px;background:#101819}
     @media(prefers-reduced-motion:reduce){nav{transition:none}}
   </style>
 </head>
 <body>
   <main aria-label="Scan Studio presentation">
-    <video muted loop playsinline disablepictureinpicture preload="auto" poster="./brand/studio-preview.jpg" aria-label="AICANFEEL performer capture and digital-double inspection"></video>
-    <nav aria-label="Presentation controls"><a href="./">Live editor</a><button id="play">Pause</button><button id="full">Full screen</button></nav>
+    <video muted loop playsinline disablepictureinpicture preload="auto" poster="./brand/workspace-preview.jpg" aria-label="AICANFEEL 4K workspace presentation"></video>
+    <a class="studio-entry" id="studio-entry" href="./studio.html">Open Studio</a>
+    <nav aria-label="Presentation controls"><a href="./">Scan viewer</a><button id="play">Pause</button><button id="full">Full screen</button></nav>
     <span id="issue" role="status" hidden></span>
   </main>
-  <script defer src="./presentation.js"></script>
+  <iframe class="studio-frame" id="studio-frame" title="AICANFEEL Live Studio" allow="autoplay; fullscreen" allowfullscreen hidden></iframe>
+  <script defer src="./presentation.js?v=2"></script>
 </body>
 </html>
 

@@ -98,3 +98,10 @@
 .statusbar,.timecode,.output-format{font:.73rem var(--instrument);}
 @media(max-width:800px){.classification-group .section-body{height:3.6rem}.appbar{gap:.52rem}.viewport-inspector .section-body{padding-top:.17rem;padding-bottom:.19rem;}}
 
+.open-live-studio{
+  flex:none;align-self:center;display:flex;align-items:center;justify-content:center;
+  padding:.36em .63em;margin-inline:.28em;border:1px solid #638b80;border-radius:4px;
+  color:#c7fae7;background:#223a35;text-decoration:none;white-space:nowrap;font:inherit;
+}
+.open-live-studio:hover,.open-live-studio:focus-visible{background:#395a4f;color:#eefff7}
+@media(max-width:830px){.open-live-studio{font-size:.76em;padding:.26em .42em}}

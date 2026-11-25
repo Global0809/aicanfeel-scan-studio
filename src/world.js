@@ -68,14 +68,14 @@ function groundSurvey() {
   return {group,dispose(){geometry.dispose();ink.dispose();plate.dispose();shadow.dispose();group.removeFromParent();}};
 }
 
-export async function createWorld(host, onContextLost, {allowSoftware=false}={}) {
+export async function createWorld(host, onContextLost, {allowSoftware=false, clearColor=0x101719}={}) {
   const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,powerPreference:"high-performance",preserveDrawingBuffer:false});
   if(!allowSoftware&&isSoftwareRenderer(renderer.getContext())){
     renderer.dispose();
     renderer.forceContextLoss();
     return null;
   }
-  renderer.setClearColor(0x101719,0);
+  renderer.setClearColor(clearColor,0);
   renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.NoToneMapping;
   host.append(renderer.domElement);
@@ -114,13 +114,13 @@ export async function createWorld(host, onContextLost, {allowSoftware=false}={})
   const annotations=makeScanAnnotations(subject,scanClock);
   const instruments=createSurveyInstruments(subject,scanClock);
   scene.add(annotations.group,instruments.group);
-  let width=0,height=0,quality=1,lastMode="",lastLayers="";
+  let width=0,height=0,quality=1,lastMode="",lastLayers="",captureSize=null,activeAsset=null;
   const resize=()=>{
-    const w=host.clientWidth,h=host.clientHeight;
+    const w=captureSize?.width??host.clientWidth,h=captureSize?.height??host.clientHeight;
     if (!w||!h) return;
     width=w;height=h;
     const nativeRatio=Math.min(window.devicePixelRatio||1,2,3000/w);
-    renderer.setPixelRatio(nativeRatio*quality);renderer.setSize(w,h,false);
+    renderer.setPixelRatio(captureSize?1:nativeRatio*quality);renderer.setSize(w,h,false);
     camera.aspect=w/h;camera.updateProjectionMatrix();
   };
   const observer=new ResizeObserver(resize);observer.observe(host);resize();
@@ -134,13 +134,34 @@ export async function createWorld(host, onContextLost, {allowSoftware=false}={})
   function lose(event) {event.preventDefault();onContextLost?.();}
   renderer.domElement.addEventListener("webglcontextlost",lose);
   return {
+    canvas:renderer.domElement,
     stats:{...subject.stats,points:cloud?.points??subject.stats.points},
-    render({mode,angle,pitch,zoom,state,time=0,transitionProgress=1}) {
+    render({mode,angle,pitch,zoom,state,time=0,transitionProgress=1,imported=null}) {
       if (dead||!width) return;
       scanClock.uScanCycle.value=time/REVOLUTION_SECONDS;
       scanClock.uScanPower.value=state.landmarks?state.intensity/100:0;
       scanClock.uScanEntry.value=THREE.MathUtils.clamp(transitionProgress,0,1);
       const look=mode;
+      cameraPose(angle,pitch,zoom);
+      rig.rotation.y=angle;
+      floor.visible=axes.visible=calibrationFloor.group.visible=state.grid;
+      rig.visible=state.cameras;
+      if(activeAsset!==imported) {
+        activeAsset?.group.removeFromParent();
+        activeAsset=imported;
+        if(imported) scene.add(imported.group);
+        scene.environment=imported?environment.texture:null;
+      }
+      annotations.group.visible=instruments.group.visible=!imported && state.annotations!==false;
+      if(imported) {
+        subject.group.visible=false;
+        if(cloud) cloud.group.visible=false;
+        imported.draw(mode,time,scanClock.uScanPower.value);
+        atmosphere.update(0,renderer.domElement.height,state.points && state.atmosphere!==false);
+        lastMode="";
+        renderer.render(scene,camera);
+        return;
+      }
       if (lastMode!==mode) {
         const base=(look==="topology"||look==="clay")?"topology":look==="points"?"points":"surface";
         subject.setMode(base,true);
@@ -150,8 +171,6 @@ export async function createWorld(host, onContextLost, {allowSoftware=false}={})
         }
         lastMode=mode;lastLayers="";
       }
-      cameraPose(angle,pitch,zoom);
-      rig.rotation.y=angle;
       const raw=(mode==="points"||mode==="capture") && !!cloud;
       subject.group.visible=!raw;
       if(cloud) {cloud.group.visible=raw;if(raw)cloud.update(time,camera,renderer.domElement.height,state,mode==="capture");}
@@ -159,8 +178,7 @@ export async function createWorld(host, onContextLost, {allowSoftware=false}={})
       camera.updateMatrixWorld();
       instruments.update(look,scanClock.uScanCycle.value,state,camera);
       const orbitalPhase=scanClock.uScanCycle.value*Math.PI*2;
-      atmosphere.update(3.9*Math.sin(orbitalPhase)+.7*Math.sin(orbitalPhase*3),renderer.domElement.height,state.points);
-      floor.visible=axes.visible=calibrationFloor.group.visible=state.grid;rig.visible=state.cameras;
+      atmosphere.update(3.9*Math.sin(orbitalPhase)+.7*Math.sin(orbitalPhase*3),renderer.domElement.height,state.points && state.atmosphere!==false);
       const layers=[mode,state.surface,state.points,state.topology,state.hidden.has("locs"),state.hidden.has("eyes"),state.hidden.has("head"),state.density,state.intensity].join("/");
       if (layers!==lastLayers) {
         for(const o of subject.originalMaterials.keys()){
@@ -187,10 +205,15 @@ export async function createWorld(host, onContextLost, {allowSoftware=false}={})
       }
       renderer.render(scene,camera);
     },
+    setOutputSize(width,height) {
+      captureSize=width&&height?{width,height}:null;
+      resize();
+    },
     setQuality(value) {value=Math.max(.5,Math.min(1,value));if (value!==quality) {quality=value;resize();}},
     diagnostics() {return {width:renderer.domElement.width,height:renderer.domElement.height,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,points:renderer.info.render.points,mode:lastMode,scanPower:scanClock.uScanPower.value,uvSeamEdges:annotations.seamEdges};},
     dispose() {
       dead=true;observer.disconnect();renderer.domElement.removeEventListener("webglcontextlost",lose);
+      activeAsset?.group.removeFromParent();
       floor.geometry.dispose();floor.material.dispose();axes.geometry.dispose();axes.material.dispose();rig.geometry.dispose();rig.material.dispose();
       calibrationFloor.dispose();instruments.dispose();annotations.dispose();inspection.dispose();subject.dispose();cloud?.dispose();atmosphere.dispose();environment.dispose();renderer.dispose();renderer.domElement.remove();
     }

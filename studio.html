@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f17">
+  <meta name="description" content="AICANFEEL Scan Studio. Direct 3D performer shots, cut a sequence, score it, and render in your browser.">
+  <title>AICANFEEL — Live Studio</title>
+  <link rel="icon" type="image/svg+xml" href="./brand/icon.svg">
+  <link rel="preload" as="image" href="./replay/scan-poster.webp">
+</head>
+<body>
+  <main class="studio" id="studio" aria-label="AICANFEEL live studio">
+    <header class="studio-header">
+      <a class="studio-brand" href="./" title="Open the scan viewer"><img src="./brand/aicanfeel.webp" alt="AICANFEEL"><span>SCAN STUDIO</span></a>
+      <div class="header-rule"></div>
+      <label class="project-name"><i data-icon="file-3d"></i><input id="project-name" aria-label="Project name" maxlength="60" value="Performer 01" autocomplete="off" spellcheck="false"></label>
+      <span class="save-state" id="save-state"></span>
+      <div class="header-spacer"></div>
+      <nav class="file-tools" aria-label="Project tools">
+        <button class="quiet-button" data-act="new" title="Start a new project"><i data-icon="file-3d"></i><span>New</span></button>
+        <button class="quiet-button" data-act="open" title="Open a Scan Studio project"><i data-icon="folder-open"></i><span>Open</span></button>
+        <button class="quiet-button" data-act="save" title="Download project (Ctrl/⌘+S)"><i data-icon="device-floppy"></i><span>Save</span></button>
+        <button class="quiet-button" data-act="presentation"><i data-icon="device-desktop"></i><span>Presentation</span></button>
+        <button class="primary-button" data-act="export"><i data-icon="aperture"></i><span>Export</span></button>
+      </nav>
+    </header>
+
+    <div class="studio-main">
+      <aside class="left-column" aria-label="Assets and analysis">
+        <section class="studio-panel asset-panel">
+          <header class="panel-heading"><h2><i data-icon="stack"></i>Assets</h2><button class="small-button" data-act="import" title="Import a GLB model or audio">+ Import</button></header>
+          <div class="asset-list" id="asset-list"></div>
+          <div class="asset-drop" id="asset-drop"><i data-icon="box"></i><span>Drop a GLB or audio file</span></div>
+          <div class="sound-status" id="sound-status" hidden><button type="button" class="small-button sound-preview" data-act="audition" aria-pressed="false" title="Preview soundtrack while playing">Audio off</button><label><input type="range" id="volume" min="0" max="1" step=".01" value=".8" aria-label="Soundtrack volume"></label><button class="glyph-button" data-act="mute" title="Remove soundtrack from sequence" aria-label="Remove soundtrack from sequence"><i data-icon="x"></i></button></div>
+        </section>
+
+        <section class="studio-panel reference-panel">
+          <header class="panel-heading"><h2><i data-icon="camera"></i>Camera angles</h2><span class="panel-meta">PERFORMER 01</span></header>
+          <div class="camera-angles">
+            <button type="button" data-angle="front" title="Set the shot to a front view"><img src="./capture/front.webp" alt=""><span>Front</span></button>
+            <button type="button" data-angle="side" title="Set the shot to a profile view"><img src="./capture/side.webp" alt=""><span>Profile</span></button>
+            <button type="button" data-angle="top" title="Set the shot to an elevated view"><img src="./capture/top.webp" alt=""><span>High</span></button>
+          </div>
+        </section>
+
+        <section class="studio-panel scope-panel" aria-label="Live material analysis">
+          <header class="panel-heading"><h2><i data-icon="chart-dots-2"></i>Live scope</h2><span class="panel-meta" id="study-unit">Y / XZ</span></header>
+          <div class="scope-title" id="study-title">Optical sections</div>
+          <canvas id="study-canvas" class="scope-canvas" aria-label="Material analysis for the performer"></canvas>
+          <div class="scope-foot"><span id="study-legend">Axial slice</span><output id="study-value"></output></div>
+          <div class="model-scope" id="model-scope" hidden>
+            <div><span>Triangles</span><output id="model-triangles">—</output></div>
+            <div><span>Vertices</span><output id="model-vertices">—</output></div>
+            <div><span>Sampled points</span><output id="model-points">—</output></div>
+            <div><span>Animations</span><output id="model-animation">—</output></div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="studio-panel viewport-panel" aria-label="3D scene viewer">
+        <header class="panel-heading viewer-heading">
+          <h2><i data-icon="viewport-wide"></i>Scene viewer</h2>
+          <div class="viewer-tools">
+            <button class="glyph-button" data-act="reset-view" title="Reset the camera orbit" aria-label="Reset the camera orbit"><i data-icon="view-360"></i></button>
+            <button class="glyph-button" data-act="grid" title="Toggle the 3D grid" aria-label="Toggle the 3D grid" aria-pressed="true"><i data-icon="grid-pattern"></i></button>
+            <button class="glyph-button" data-act="clean" title="Toggle clean view" aria-label="Toggle clean view" aria-pressed="false"><i data-icon="eye"></i></button>
+            <button class="glyph-button" data-act="fullscreen" title="Full screen (F)" aria-label="Full screen"><i data-icon="maximize"></i></button>
+          </div>
+        </header>
+        <div class="viewer-body">
+          <div class="stage-frame" id="stage-frame" aria-describedby="stage-help">
+            <div id="render-host" class="render-host" aria-hidden="true"></div>
+            <canvas id="stage-canvas" class="stage-canvas" aria-label="Rendered scene"></canvas>
+            <img class="stage-poster" id="stage-poster" src="./replay/scan-poster.webp" alt="">
+            <div class="frame-brackets" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+            <div class="stage-top"><span class="live-pill"><span></span><b id="engine">Loading scene</b></span><span id="stage-angle">YAW 000°</span></div>
+            <div class="stage-bottom">
+              <div class="stage-caption"><span id="stage-segment">SHOT 01</span><h1 id="active-look">Point cloud</h1></div>
+              <div class="angle-dial" aria-hidden="true"><b id="angle-dial"></b><i></i></div>
+            </div>
+          </div>
+        </div>
+        <footer class="viewer-footer"><span id="stage-help"><i data-icon="hand-stop"></i>Drag to orbit <span class="help-dot">·</span> Scroll to zoom</span><span id="stage-metrics"></span><button class="small-button" data-act="reset-view">Reset camera</button></footer>
+      </section>
+
+      <aside class="studio-panel inspector-panel" aria-label="Shot inspector">
+        <header class="panel-heading"><h2><i data-icon="adjustments-horizontal"></i>Inspector</h2><span class="shot-index" id="shot-index">SHOT 01</span></header>
+        <div class="inspector-tabs" role="group" aria-label="Inspector settings">
+          <button type="button" data-pane="material" aria-pressed="true">Material</button>
+          <button type="button" data-pane="camera" aria-pressed="false">Camera</button>
+        </div>
+        <div class="inspector-scroll" id="material-pane">
+          <div class="look-grid" id="look-grid" aria-label="Material presets"></div>
+          <div class="parameter-group">
+            <label class="parameter"><span>Scan intensity</span><output data-value="scan"></output><input data-adjust="scan" type="range" min="0" max="100" step="1"></label>
+            <label class="parameter"><span>Audio-reactive scan</span><output data-value="pulse"></output><input data-adjust="pulse" type="range" min="0" max="100" step="1"></label>
+            <label class="parameter"><span>Exposure</span><output data-value="exposure"></output><input data-adjust="exposure" type="range" min=".55" max="1.65" step=".01"></label>
+            <label class="select-row"><span>Grade</span><select data-adjust="grade"><option value="polar">Polar</option><option value="ember">Ember</option><option value="violet">Violet</option><option value="neutral">Neutral</option></select></label>
+          </div>
+        </div>
+        <div class="inspector-scroll" id="camera-pane" hidden>
+          <div class="parameter-group camera-fields">
+            <label class="select-row camera-source"><span>Scene asset</span><select data-adjust="asset" id="camera-asset"></select></label>
+            <label class="camera-toggle"><input type="checkbox" id="animate-camera">Animate camera</label>
+            <div class="keyframe-controls" id="keyframe-controls" hidden>
+              <div role="group" aria-label="Camera keyframe"><button type="button" class="small-button" data-keypose="start" aria-pressed="true">Start</button><button type="button" class="small-button" data-keypose="end" aria-pressed="false">End</button></div>
+              <label class="select-row"><span>Easing</span><select id="camera-ease"><option value="smooth">Smooth</option><option value="linear">Linear</option></select></label>
+            </div>
+            <label class="parameter"><span>Orbit speed</span><output data-value="orbit"></output><input data-adjust="orbit" type="range" min="-2" max="2" step=".02"></label>
+            <label class="parameter"><span>Yaw</span><output data-value="yaw"></output><input data-adjust="yaw" type="range" min="-180" max="180" step="1"></label>
+            <label class="parameter"><span>Elevation</span><output data-value="tilt"></output><input data-adjust="tilt" type="range" min="-30" max="30" step="1"></label>
+            <label class="parameter"><span>Zoom</span><output data-value="zoom"></output><input data-adjust="zoom" type="range" min=".70" max="1.52" step=".01"></label>
+            <button class="quiet-button capture-view" data-act="use-view"><i data-icon="crosshair"></i>Use current camera</button>
+          </div>
+        </div>
+        <footer class="shot-settings">
+          <label class="select-row"><span>Duration</span><span class="numeric-input"><input type="number" id="shot-duration" data-adjust="duration" min=".25" max="15" step=".05" aria-label="Shot duration"><b>s</b></span></label>
+          <label class="select-row"><span>Transition</span><select data-adjust="transition"><option value="scan">Scan wipe</option><option value="cut">Hard cut</option><option value="dip">Dip to black</option></select></label>
+        </footer>
+      </aside>
+    </div>
+
+    <section class="studio-panel timeline-panel" aria-label="Sequence timeline">
+      <header class="timeline-heading">
+        <div class="timeline-title"><i data-icon="timeline"></i><h2>Sequence</h2></div>
+        <div class="transport-tools" aria-label="Transport">
+          <button class="glyph-button" data-act="previous" title="Previous shot" aria-label="Previous shot"><i data-icon="player-skip-back"></i></button>
+          <button class="play-button" data-act="play" aria-label="Pause playback" title="Play or pause (Space)" id="transport-play"><i data-icon="player-pause"></i></button>
+          <button class="glyph-button" data-act="next" title="Next shot" aria-label="Next shot"><i data-icon="player-skip-forward"></i></button>
+          <button class="glyph-button loop-button" data-act="loop" title="Toggle looping" aria-label="Toggle looping" aria-pressed="true"><i data-icon="repeat"></i></button>
+          <output class="time-code" id="time-code">00:00:00</output><span class="total-time" id="total-time">/ 00:16:00</span>
+        </div>
+        <div class="timeline-actions" aria-label="Edit shots">
+          <button class="small-button" data-act="undo" title="Undo (Ctrl/⌘+Z)" aria-label="Undo">Undo</button>
+          <button class="small-button" data-act="redo" title="Redo (Ctrl/⌘+Shift+Z)" aria-label="Redo">Redo</button>
+          <span class="timeline-divider"></span>
+          <button class="small-button" data-act="earlier" title="Move selected shot earlier" aria-label="Move selected shot earlier">‹</button>
+          <button class="small-button" data-act="later" title="Move selected shot later" aria-label="Move selected shot later">›</button>
+          <button class="small-button" data-act="split" title="Split at playhead (S)">Split</button>
+          <button class="small-button" data-act="duplicate" title="Duplicate selected shot">Duplicate</button>
+          <button class="small-button" data-act="remove" title="Delete selected shot (Delete)" aria-label="Delete shot"><i data-icon="x"></i></button>
+          <button class="small-button add-shot" data-act="add">+ Shot</button>
+        </div>
+      </header>
+      <div class="timeline-body">
+        <div class="track-labels" aria-hidden="true"><span>TIME</span><span><i data-icon="layers-intersect"></i>Materials</span><span><i data-icon="adjustments-horizontal"></i>Audio</span></div>
+        <div class="track-area" id="track-area">
+          <div class="ruler" id="ruler">
+            <div id="ruler-ticks" class="ruler-ticks" aria-hidden="true"></div>
+            <input id="scrubber" class="scrubber" type="range" min="0" value="0" step="1" aria-label="Sequence playhead">
+          </div>
+          <div class="clip-lane" id="clip-lane"></div>
+          <div class="audio-lane" id="audio-lane">
+            <canvas id="waveform" aria-hidden="true"></canvas>
+            <button class="audio-import" data-act="audio">+ Add soundtrack</button>
+            <button class="audio-edit" data-act="audio-settings" title="Adjust the soundtrack start time" hidden><span id="audio-name"></span></button>
+          </div>
+          <div id="playhead" class="playhead" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="studio-footer"><span><i data-icon="scan"></i><b id="footer-engine">Loading renderer</b></span><span class="footer-middle" id="footer-note">Space · play/pause <b> / </b> S · split <b> / </b> F · full screen</span><span id="footer-format">16:9 / 60 fps timeline</span></footer>
+    <output id="toast" class="studio-toast" role="status" aria-live="polite" hidden></output>
+    <input type="file" id="asset-file" accept=".glb,.wav,.mp3,.m4a,.aac,.ogg,.opus,.flac,.aif,.aiff" multiple hidden>
+    <input type="file" id="audio-file" accept=".wav,.mp3,.m4a,.aac,.ogg,.opus,.flac,.aif,.aiff,audio/*" hidden>
+    <input type="file" id="project-file" accept=".json,application/json" hidden>
+
+    <dialog id="new-dialog" class="studio-dialog" aria-labelledby="new-title">
+      <form method="dialog">
+        <header class="dialog-heading"><h2 id="new-title"><i data-icon="file-3d"></i>New project</h2><button class="glyph-button" title="Close" aria-label="Close"><i data-icon="x"></i></button></header>
+      </form>
+      <div class="template-grid">
+        <button type="button" data-template="performer" style="--sprite:0% 0%"><span class="look-image"></span><strong>Performer demo</strong><span>Eight shots with soundtrack</span></button>
+        <button type="button" data-template="materials" style="--sprite:66.6667% 0%"><span class="look-image"></span><strong>Material tests</strong><span>UV, titanium, clay, surface</span></button>
+        <button type="button" data-template="motion" style="--sprite:100% 0%"><span class="look-image"></span><strong>Motion study</strong><span>Four animated camera moves</span></button>
+        <button type="button" data-template="blank" style="--sprite:0% 100%"><span class="look-image"></span><strong>Blank project</strong><span>A single editable shot</span></button>
+      </div>
+    </dialog>
+
+    <dialog id="audio-dialog" class="studio-dialog" aria-labelledby="audio-title">
+      <form method="dialog">
+        <header class="dialog-heading"><h2 id="audio-title"><i data-icon="adjustments-horizontal"></i>Soundtrack</h2><button class="glyph-button" title="Close" aria-label="Close"><i data-icon="x"></i></button></header>
+      </form>
+      <div class="export-fields">
+        <span class="audio-source-name" id="audio-source-name"></span>
+        <label class="select-row"><span>Start from</span><span class="numeric-input"><input type="number" id="audio-offset" min="0" step=".01" aria-label="Soundtrack start offset"><b>s</b></span></label>
+        <p>The sequence starts at this point in the soundtrack. Scan modulation and video export use the same timing.</p>
+        <div class="export-actions"><button data-act="audio-replace" class="quiet-button">Replace audio</button><button data-act="audio-apply" class="primary-button">Apply</button></div>
+      </div>
+    </dialog>
+
+    <dialog id="export-dialog" class="studio-dialog" aria-labelledby="export-title">
+      <form method="dialog">
+        <header class="dialog-heading"><h2 id="export-title"><i data-icon="aperture"></i>Export your work</h2><button class="glyph-button dialog-close" title="Close" aria-label="Close"><i data-icon="x"></i></button></header>
+      </form>
+      <div class="export-fields">
+        <label class="select-row"><span>Resolution</span><select id="export-size"><option value="1080">1920 × 1080</option><option value="720">1280 × 720</option><option value="2160">3840 × 2160</option></select></label>
+        <label class="select-row"><span>Video frame rate</span><select id="export-fps"><option value="30">30 fps</option><option value="60">60 fps</option></select></label>
+        <label class="select-row"><span>Backdrop</span><select id="export-backdrop"><option value="studio">Studio</option><option value="alpha">Transparent PNG</option><option value="chroma">Chroma green</option></select></label>
+        <p id="export-hint">The renderer writes every frame of your edited scene, along with the soundtrack.</p>
+        <div class="encode-preview" id="encode-preview" hidden></div>
+        <progress id="export-progress" max="1" value="0" hidden></progress>
+        <output id="export-message" class="export-message" aria-live="polite"></output>
+        <div class="export-actions"><button class="quiet-button" data-act="cancel-export" hidden>Cancel</button><button class="quiet-button" data-act="export-png"><i data-icon="photo"></i>Save frame</button><button class="primary-button" data-act="export-movie"><i data-icon="player-play"></i>Render video</button></div>
+      </div>
+    </dialog>
+  </main>
+  <noscript>Scan Studio requires JavaScript to render and edit sequences.</noscript>
+  <script type="module" src="/src/editor/studio.js"></script>
+</body>
+</html>

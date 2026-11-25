@@ -39,6 +39,7 @@ button:disabled{cursor:default;opacity:.37}
 .save-state{font:.69em var(--mono);color:#8bcab8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .header-spacer{flex:1}
 .file-tools,.viewer-tools,.transport-tools,.timeline-actions,.export-actions{display:flex;align-items:center;gap:.42em;white-space:nowrap}
+.file-tools .compact-label{display:none}
 .quiet-button,.primary-button,.glyph-button,.small-button,.play-button{
   border:1px solid transparent;display:inline-flex;align-items:center;justify-content:center;gap:.48em;
   border-radius:4px;text-decoration:none;white-space:nowrap;padding:.53em .66em;
@@ -300,10 +301,16 @@ input[type=range]{margin:0;accent-color:var(--accent-hot);cursor:ew-resize}
 @media(max-width:482px){
   .project-name{flex:1}
   .project-name input{width:100%}
-  .file-tools{width:100%;display:grid;grid-template-columns:repeat(5,1fr)}
+  .file-tools{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.31em;font-size:.93em}
+  .file-tools button{min-width:0;padding:.52em .18em;gap:.24em}
   .file-tools .quiet-button span{display:inline}
+  .file-tools .quiet-button .wide-label{display:none}
   .timeline-heading{display:grid;justify-content:stretch;gap:.5em;padding:.35em 0 .47em}
   .timeline-actions{justify-content:space-between;gap:.25em}
+}
+@media(max-width:365px) and (orientation:portrait){
+  .file-tools button .icon{display:none}
+  .timeline-actions .small-button{padding-inline:.37em}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::after,*::before{scroll-behavior:auto!important}

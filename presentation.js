@@ -22,6 +22,7 @@ const slowLink = connection?.saveData || ["slow-2g", "2g", "3g"].includes(connec
 let high = requested === "4k" || (requested !== "hd" && width > 2100 && !slowLink);
 let wantsPlayback = !calm.matches;
 let disposeStream = () => {};
+let pumpStream = () => {};
 let studioVisible = false;
 const studioLink = document.querySelector("#studio-entry");
 const studioFrame = document.querySelector("#studio-frame");
@@ -73,6 +74,7 @@ async function playSegments() {
     for (const name of events) video.removeEventListener(name, pump);
     URL.revokeObjectURL(blob);
     disposeStream = () => {};
+    pumpStream = () => {};
   };
   function fragmentURL(name) {
     const url = new URL(name, hls);
@@ -160,7 +162,7 @@ async function playSegments() {
     return false;
   }
   async function pump() {
-    if (!buffer || busy || control.signal.aborted) return;
+    if (!buffer || busy || control.signal.aborted || studioVisible) return;
     busy = true;
     const t = Math.min(video.currentTime, total - 0.01);
     try {
@@ -170,7 +172,7 @@ async function playSegments() {
         await changeBuffer(() => buffer.remove(segments[0].end, segments[first - 4].start));
       }
       const ahead = wantsPlayback ? 4 : 1;
-      for (let index = first; index < Math.min(first + ahead, segments.length); index++) {
+      for (let index = first; index < Math.min(first + ahead, segments.length) && !studioVisible; index++) {
         const chunk = segments[index];
         if (contains((chunk.start + chunk.end) / 2)) continue;
         const data = await fetchFragment(index);
@@ -206,6 +208,7 @@ async function playSegments() {
     media.duration = total;
     buffer = media.addSourceBuffer(codec);
     for (const name of events) video.addEventListener(name, pump);
+    pumpStream = pump;
     pump();
   } catch (error) {
     if (!control.signal.aborted) playbackError();
@@ -250,6 +253,7 @@ function showStudio(visible) {
     if (!studioFrame.hasAttribute("src")) studioFrame.src = studioLink.href;
     studioFrame.focus();
   } else {
+    pumpStream();
     start();
     studioLink.focus({preventScroll:true});
   }
